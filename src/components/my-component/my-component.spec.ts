@@ -1,5 +1,6 @@
 import { TestWindow } from '@stencil/core/testing';
 import { MyComponent } from './my-component';
+import * as Axe from 'axe-core';
 
 describe('my-component', () => {
   it('should build', () => {
@@ -17,27 +18,31 @@ describe('my-component', () => {
       });
     });
 
-    it('should work without parameters', () => {
-      expect(element.textContent.trim()).toEqual('Hello, World! I\'m');
-    });
+    it('should have accessibility violations depending on values specified', async () => {
+  
+      const options: Axe.RunOptions = {
+        runOnly: {
+          type: 'tag',
+          values: ['wcag2a', 'wcag2aa']
+        },
+      };
+  
+      const context: Axe.ElementContext = element;
+      expect(context).not.toBeNull();
+  
+      await Axe.run(context).then(results => {
+        expect(results.violations.length).toEqual(4);
+      });
+  
+      await Axe.run(options).then(results => {
+        expect(results.violations.length).toEqual(2);
+        console.log(results.violations);
+      });
 
-    it('should work with a first name', async () => {
-      element.first = 'Peter';
-      await testWindow.flush();
-      expect(element.textContent.trim()).toEqual('Hello, World! I\'m Peter');
-    });
-
-    it('should work with a last name', async () => {
-      element.last = 'Parker';
-      await testWindow.flush();
-      expect(element.textContent.trim()).toEqual('Hello, World! I\'m  Parker');
-    });
-
-    it('should work with both a first and a last name', async () => {
-      element.first = 'Peter';
-      element.last = 'Parker';
-      await testWindow.flush();
-      expect(element.textContent.trim()).toEqual('Hello, World! I\'m Peter Parker');
+      //If I use more than one param it fails but I am sure that the context variable is at fault even though is of ElementContext type.
+      // await Axe.run(context, options).then(results => {
+      //   expect(results.violations.length).toEqual(4);
+      // });
     });
   });
 });
